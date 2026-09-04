@@ -1,0 +1,7 @@
+pytorch-lightning>=2.6,<2.7
+rasterio>=1.4,<1.5
+tifffile>=2026.3,<2027
+Pillow>=12,<13
+numpy
+scipy
+packaging

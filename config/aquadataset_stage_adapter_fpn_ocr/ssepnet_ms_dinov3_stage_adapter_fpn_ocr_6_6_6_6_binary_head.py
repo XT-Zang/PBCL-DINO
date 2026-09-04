@@ -1,0 +1,1 @@
+EXPERIMENT_ID = "ssepnet_ms_dinov3_stage_adapter_fpn_ocr_6_6_6_6_binary_head"
