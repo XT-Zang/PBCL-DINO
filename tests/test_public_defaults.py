@@ -15,9 +15,23 @@ from geoseg.pretrained import (
     pretrained_weight_path,
     resolve_pretrained_model_path,
 )
+from geoseg.runtime import load_experiment
 
 
 class PublicDefaultsTest(unittest.TestCase):
+    def test_release_contains_one_flat_public_config(self) -> None:
+        config_root = Path("config")
+        config_files = sorted(
+            path.relative_to(config_root).as_posix()
+            for path in config_root.rglob("*.py")
+        )
+
+        self.assertEqual(config_files, ["PBCL-DINO.py"])
+        self.assertEqual(run.CONFIG.resolve(), (config_root / "PBCL-DINO.py").resolve())
+
+        experiment = load_experiment(run.CONFIG, build=False)
+        self.assertEqual(experiment.spec.provenance["experiment_id"], "PBCL-DINO")
+
     def test_runner_defaults_to_seed_42(self) -> None:
         parser = run.build_parser()
 

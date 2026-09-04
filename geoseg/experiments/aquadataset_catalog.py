@@ -11,7 +11,8 @@ from geoseg.pretrained import (
 )
 from geoseg.runtime.specs import ExperimentSpec
 
-TARGET_EXPERIMENT = "ssepnet_ms_dinov3_stage_adapter_fpn_ocr_6_6_6_6_binary_head"
+PUBLIC_EXPERIMENT_ID = "PBCL-DINO"
+MODEL_KEY = "ssepnet_ms_dinov3_stage_adapter_fpn_ocr_6_6_6_6_binary_head"
 AQUADATASET_VERSION = "aquav3-sceneholdout-v1"
 AQUADATASET_MEAN = (0.2259130624, 0.2878868692, 0.3214092823, 0.1363257618)
 AQUADATASET_STD = (0.2089709094, 0.2542853528, 0.2718809957, 0.1339930134)
@@ -32,15 +33,15 @@ def build_aquadataset_spec(
     source_config: str | Path | None = None,
 ) -> ExperimentSpec:
     experiment_id = str(experiment_id).strip().lower().replace("-", "_")
-    if experiment_id != TARGET_EXPERIMENT:
-        raise ValueError(f"PBCL-DINO publishes only {TARGET_EXPERIMENT!r}; got {experiment_id!r}")
+    if experiment_id != "pbcl_dino":
+        raise ValueError(f"PBCL-DINO publishes only {PUBLIC_EXPERIMENT_ID!r}; got {experiment_id!r}")
     seed = int(seed)
     if seed not in AQUADATASET_SEEDS:
         raise ValueError(f"seed must be one of {AQUADATASET_SEEDS}, got {seed}")
 
     data_root = os.environ.get("AQUADATASET_ROOT", "").strip()
     pretrained_path = pretrained_weight_path(DINOV3_CHECKPOINT_NAME)
-    run_name = f"{TARGET_EXPERIMENT}_seed{seed}"
+    run_name = f"{PUBLIC_EXPERIMENT_ID}_seed{seed}"
     output_dir = str(Path("train_out/Aquadataset/PBCL-DINO") / f"seed{seed}")
 
     loss = {
@@ -56,7 +57,7 @@ def build_aquadataset_spec(
     }
     return ExperimentSpec(
         model={
-            "key": TARGET_EXPERIMENT,
+            "key": MODEL_KEY,
             "in_channels": 4,
             "num_classes": 1,
             "pretrained": True,
@@ -192,8 +193,8 @@ def build_aquadataset_spec(
             "schema_version": 1,
             "campaign": "aquadataset",
             "family": "PBCL-DINO",
-            "experiment_id": TARGET_EXPERIMENT,
-            "model_key": TARGET_EXPERIMENT,
+            "experiment_id": PUBLIC_EXPERIMENT_ID,
+            "model_key": MODEL_KEY,
             "treatment": "boundary_pbcl",
             "training_protocol": "uniform_40ep_stage_adapter_fpn_binary_pbcl_v1",
             "source_config": str(source_config) if source_config else "",

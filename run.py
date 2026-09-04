@@ -5,7 +5,7 @@ import argparse
 import os
 from pathlib import Path
 
-CONFIG = Path(__file__).parent / "config" / "aquadataset_stage_adapter_fpn_ocr" / "ssepnet_ms_dinov3_stage_adapter_fpn_ocr_6_6_6_6_binary_head.py"
+CONFIG = Path(__file__).parent / "config" / "PBCL-DINO.py"
 DEFAULT_SEED = 42
 
 

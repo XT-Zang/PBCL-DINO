@@ -24,7 +24,7 @@ PBCL-DINO combines a remote-sensing foundation model with explicit boundary and 
 
 The release contains one locked experiment configuration:
 
-[`config/aquadataset_stage_adapter_fpn_ocr/ssepnet_ms_dinov3_stage_adapter_fpn_ocr_6_6_6_6_binary_head.py`](config/aquadataset_stage_adapter_fpn_ocr/ssepnet_ms_dinov3_stage_adapter_fpn_ocr_6_6_6_6_binary_head.py)
+[`config/PBCL-DINO.py`](config/PBCL-DINO.py)
 
 Other GeoSeg datasets, baselines, archived experiments, campaign scripts, and legacy evaluation wrappers are intentionally excluded.
 

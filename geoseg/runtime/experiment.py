@@ -6,7 +6,8 @@ from typing import Any
 
 from .specs import ExperimentSpec
 
-TARGET_CONFIG_DIR = "aquadataset_stage_adapter_fpn_ocr"
+PUBLIC_CONFIG_FILENAME = "PBCL-DINO.py"
+PUBLIC_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / PUBLIC_CONFIG_FILENAME
 
 
 @dataclass(frozen=True)
@@ -45,8 +46,8 @@ def load_experiment(
     path = Path(config_path).expanduser().resolve()
     if not path.is_file():
         raise FileNotFoundError(path)
-    if path.parent.name != TARGET_CONFIG_DIR:
-        raise ValueError(f"PBCL-DINO accepts configs only from {TARGET_CONFIG_DIR!r}")
+    if path != PUBLIC_CONFIG_PATH:
+        raise ValueError(f"PBCL-DINO accepts only config/{PUBLIC_CONFIG_FILENAME}")
 
     from geoseg.experiments.aquadataset_catalog import build_aquadataset_spec
 
