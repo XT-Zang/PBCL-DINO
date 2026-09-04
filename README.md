@@ -2,6 +2,8 @@
 
 Minimal public implementation of **PBCL-DINO** for dense aquaculture-raft segmentation on **Aquadataset**.
 
+PBCL-DINO was developed from [GeoSeg](https://github.com/WangLibo1995/GeoSeg). This repository turns that research codebase into a focused, reproducible release containing only the data pipeline, model, loss, metrics, and training runtime required for the published PBCL-DINO experiment.
+
 ## Model
 
 This repository publishes exactly one experiment configuration:
@@ -26,21 +28,7 @@ Install a PyTorch build matching your CUDA environment first. The reference runt
 pip install -r requirements.txt
 ```
 
-## DINOv3 pretrained checkpoint
-
-The default pretrained backend is **PyTorch (`torch`)**. PBCL-DINO resolves the DINOv3 ViT-L/16 SAT-493M checkpoint from the standard PyTorch cache:
-
-```text
-~/.cache/torch/hub/checkpoints/dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth
-```
-
-Equivalently, with `TORCH_HOME=~/.cache/torch`:
-
-```text
-$TORCH_HOME/hub/checkpoints/dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth
-```
-
-You may override the cache root with `GEOSEG_PRETRAINED_ROOT`. The checkpoint itself is not distributed in this repository.
+The required DINOv3 pretrained weights are downloaded and loaded automatically on first use.
 
 ## Aquadataset
 
@@ -72,22 +60,22 @@ Each positive PBCL target contains `instance_map` and `instance_pairs`. The same
 Inspect the locked experiment specification:
 
 ```bash
-python run.py inspect --seed 42
+python run.py inspect
 ```
 
 Validate dependencies, dataset protocol, PBCL targets, and the DINOv3 checkpoint:
 
 ```bash
-python run.py preflight --seed 42
+python run.py preflight
 ```
 
 Train:
 
 ```bash
-python run.py train --seed 42
+python run.py train
 ```
 
-The registered reproducibility seeds are **42, 43, and 44**. The locked training recipe uses 40 epochs, AdamW, warm-up cosine scheduling, Boundary weight 0.6, and PBCL weight 0.1.
+All commands use seed **42** by default. Seeds **43** and **44** remain available through `--seed` for multi-seed reproduction. The locked training recipe uses 40 epochs, AdamW, warm-up cosine scheduling, Boundary weight 0.6, and PBCL weight 0.1.
 
 ## License
 

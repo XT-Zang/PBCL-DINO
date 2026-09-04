@@ -12,6 +12,8 @@ from typing import Mapping
 from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
+from geoseg.pretrained import resolve_pretrained_model_path
+
 from .experiment import ResolvedExperiment
 
 DEPENDENCY_POLICY: Mapping[str, str] = {
@@ -129,11 +131,7 @@ def validate_aquadataset_data_contract(experiment: ResolvedExperiment) -> dict[s
 
 def validate_pretrained_contract(experiment: ResolvedExperiment) -> dict[str, object]:
     artifact = dict(experiment.spec.model["pretrained_artifacts"])["dinov3-vitl16-sat493m"]
-    path = Path(str(artifact["path"])).expanduser().resolve()
-    if not path.is_file():
-        raise RuntimeError(
-            "DINOv3 checkpoint is missing. Expected the standard PyTorch cache path: " + str(path)
-        )
+    path = resolve_pretrained_model_path("dinov3-vitl16-sat493m")
     expected = str(artifact["sha256"])
     actual = _sha256_file(path)
     if actual != expected:

@@ -16,10 +16,17 @@ class PretrainedModelSpec:
     source: str
     consumers: tuple[str, ...]
     revision: str = ""
+    url: str = ""
+    sha256: str = ""
 
 
 DINOV3_CHECKPOINT_NAME = "dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth"
 DINOV3_RELATIVE_PATH = f"torch/hub/checkpoints/{DINOV3_CHECKPOINT_NAME}"
+DINOV3_CHECKPOINT_URL = (
+    "https://dl.fbaipublicfiles.com/dinov3/dinov3_vitl16/"
+    f"{DINOV3_CHECKPOINT_NAME}"
+)
+DINOV3_CHECKPOINT_SHA256 = "eadcf0ffc02418b6c22a885ea1a7aaeeef84fbf0f5bb4d0b7d1d36e68a964f48"
 
 DEFAULT_PRETRAINED_MODELS = (
     PretrainedModelSpec(
@@ -28,37 +35,45 @@ DEFAULT_PRETRAINED_MODELS = (
         DINOV3_RELATIVE_PATH,
         "DINOv3 ViT-L/16 SAT-493M",
         ("PBCL-DINO",),
+        url=DINOV3_CHECKPOINT_URL,
+        sha256=DINOV3_CHECKPOINT_SHA256,
     ),
 )
 
 
 def default_pretrained_root() -> Path:
-    """Return the public-release pretrained root.
-
-    By default this is ``~/.cache`` so DINOv3 resolves from the standard
-    PyTorch cache at ``~/.cache/torch/hub/checkpoints``. Set
-    ``GEOSEG_PRETRAINED_ROOT`` to override the cache root.
-    """
+    """Return the optional compatibility cache root."""
     configured = os.environ.get("GEOSEG_PRETRAINED_ROOT")
     root = Path(configured).expanduser() if configured else Path.home() / ".cache"
     return root.resolve()
 
 
 def configure_pretrained_environment(root: str | Path | None = None) -> dict[str, str]:
-    resolved_root = Path(root).expanduser().resolve() if root is not None else default_pretrained_root()
-    torch_home = (resolved_root / "torch").resolve()
-    os.environ.setdefault("GEOSEG_PRETRAINED_ROOT", str(resolved_root))
-    os.environ.setdefault("TORCH_HOME", str(torch_home))
+    if root is not None:
+        resolved_root = Path(root).expanduser().resolve()
+        os.environ["GEOSEG_PRETRAINED_ROOT"] = str(resolved_root)
+        os.environ["TORCH_HOME"] = str((resolved_root / "torch").resolve())
+    elif os.environ.get("GEOSEG_PRETRAINED_ROOT") and not os.environ.get("TORCH_HOME"):
+        resolved_root = default_pretrained_root()
+        os.environ["TORCH_HOME"] = str((resolved_root / "torch").resolve())
+    checkpoint = pretrained_weight_path(DINOV3_CHECKPOINT_NAME)
     return {
-        "root": str(resolved_root),
-        "torch_home": os.environ["TORCH_HOME"],
-        "dinov3_checkpoint": str((torch_home / "hub" / "checkpoints" / DINOV3_CHECKPOINT_NAME).resolve()),
+        "root": str(default_pretrained_root()),
+        "torch_home": str(checkpoint.parents[2]),
+        "dinov3_checkpoint": str(checkpoint),
     }
 
 
 def pretrained_weight_path(filename: str) -> Path:
-    """Compatibility helper for callers that pass a checkpoint filename."""
-    return (default_pretrained_root() / "torch" / "hub" / "checkpoints" / filename).resolve()
+    """Return a checkpoint path using PyTorch's normal Hub cache rules."""
+    configured = os.environ.get("GEOSEG_PRETRAINED_ROOT")
+    if configured:
+        checkpoint_dir = Path(configured).expanduser().resolve() / "torch" / "hub" / "checkpoints"
+    else:
+        import torch
+
+        checkpoint_dir = Path(torch.hub.get_dir()).expanduser().resolve() / "checkpoints"
+    return (checkpoint_dir / filename).resolve()
 
 
 def resolve_legacy_pretrained_path(path: str | Path) -> Path:
@@ -75,21 +90,37 @@ def _has_payload(path: Path) -> bool:
 
 
 def resolve_pretrained_model_path(key: str, *, root: str | Path | None = None) -> Path:
-    """Resolve DINOv3 from the PyTorch checkpoint cache without downloading it."""
+    """Resolve a pretrained model, downloading it through PyTorch Hub if needed."""
     normalized = str(key).strip().lower()
     try:
         spec = next(model for model in DEFAULT_PRETRAINED_MODELS if model.key == normalized)
     except StopIteration as exc:
         raise KeyError(f"Unknown pretrained model key: {key!r}") from exc
 
-    resolved_root = Path(root).expanduser().resolve() if root is not None else default_pretrained_root()
-    path = (resolved_root / spec.relative_path).resolve()
+    path = (
+        (Path(root).expanduser().resolve() / spec.relative_path).resolve()
+        if root is not None
+        else pretrained_weight_path(DINOV3_CHECKPOINT_NAME)
+    )
     if not _has_payload(path):
-        raise FileNotFoundError(
-            f"DINOv3 pretrained checkpoint is missing at {path}. "
-            f"Place {DINOV3_CHECKPOINT_NAME} in the PyTorch checkpoint cache, "
-            "or set GEOSEG_PRETRAINED_ROOT to a cache root containing torch/hub/checkpoints/."
-        )
+        import torch
+
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if not spec.url or not spec.sha256:
+            raise RuntimeError(f"No verified download is configured for {spec.key!r}")
+        try:
+            torch.hub.download_url_to_file(
+                spec.url,
+                str(path),
+                hash_prefix=spec.sha256,
+                progress=True,
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                "Unable to download the DINOv3 ViT-L/16 SAT-493M pretrained weights. "
+                "Confirm that your network can reach the official DINOv3 download and "
+                "that you have accepted Meta's DINOv3 license."
+            ) from exc
     return path
 
 

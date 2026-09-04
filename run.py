@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 CONFIG = Path(__file__).parent / "config" / "aquadataset_stage_adapter_fpn_ocr" / "ssepnet_ms_dinov3_stage_adapter_fpn_ocr_6_6_6_6_binary_head.py"
+DEFAULT_SEED = 42
 
 
 def _configure_dataset_root() -> Path:
@@ -19,13 +20,23 @@ def _configure_dataset_root() -> Path:
     return root
 
 
-def main() -> int:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="PBCL-DINO minimal Aquadataset runner")
     sub = parser.add_subparsers(dest="command", required=True)
     for name in ("inspect", "preflight", "train"):
         command = sub.add_parser(name)
-        command.add_argument("--seed", type=int, choices=(42, 43, 44), default=42)
-    args = parser.parse_args()
+        command.add_argument(
+            "--seed",
+            type=int,
+            choices=(42, 43, 44),
+            default=DEFAULT_SEED,
+            help="reproducibility seed (default: %(default)s)",
+        )
+    return parser
+
+
+def main() -> int:
+    args = build_parser().parse_args()
     _configure_dataset_root()
 
     if args.command == "inspect":

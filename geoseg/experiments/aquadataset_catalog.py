@@ -4,7 +4,11 @@ import os
 from pathlib import Path
 
 from geoseg.metrics.aquadataset import AQUADATASET_OVERALL_SCORE_WEIGHTS
-from geoseg.pretrained import default_pretrained_root
+from geoseg.pretrained import (
+    DINOV3_CHECKPOINT_NAME,
+    DINOV3_CHECKPOINT_SHA256,
+    pretrained_weight_path,
+)
 from geoseg.runtime.specs import ExperimentSpec
 
 TARGET_EXPERIMENT = "ssepnet_ms_dinov3_stage_adapter_fpn_ocr_6_6_6_6_binary_head"
@@ -18,8 +22,7 @@ AQUADATASET_SPLIT_HASHES = {
     "test": "72edfa9ec561137b1aed94cc96ea803b537cd418ce7e3929ae803d7e6df2f3a7",
 }
 AQUADATASET_SEEDS = (42, 43, 44)
-DINOV3_RELATIVE_PATH = "torch/hub/checkpoints/dinov3_vitl16_pretrain_sat493m-eadcf0ff.pth"
-DINOV3_SHA256 = "eadcf0ffc02418b6c22a885ea1a7aaeeef84fbf0f5bb4d0b7d1d36e68a964f48"
+DINOV3_SHA256 = DINOV3_CHECKPOINT_SHA256
 
 
 def build_aquadataset_spec(
@@ -36,7 +39,7 @@ def build_aquadataset_spec(
         raise ValueError(f"seed must be one of {AQUADATASET_SEEDS}, got {seed}")
 
     data_root = os.environ.get("AQUADATASET_ROOT", "").strip()
-    pretrained_path = (default_pretrained_root() / DINOV3_RELATIVE_PATH).resolve()
+    pretrained_path = pretrained_weight_path(DINOV3_CHECKPOINT_NAME)
     run_name = f"{TARGET_EXPERIMENT}_seed{seed}"
     output_dir = str(Path("train_out/Aquadataset/PBCL-DINO") / f"seed{seed}")
 
